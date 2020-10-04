@@ -137,12 +137,12 @@ namespace Scraper
             try
             {
                 WriteToCsv(columns, currency);
+                Console.WriteLine($">> Data collected and stored in .csv for {currency}.");
             }
             catch (Exception exc)
             {
                 Console.WriteLine(">> Error in csv creation: " + exc.Message);
             }
-            Console.WriteLine($">> Data collected and stored in .csv for {currency}.");
         }
         private bool SameRowData(string[] previousPageRow, string[] currentPageRow)
         {
