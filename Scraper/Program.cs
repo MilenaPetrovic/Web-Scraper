@@ -23,30 +23,38 @@ namespace Scraper
 
         public void Main()
         {
-            //Creating list of currencies
-            CreateCurrencyList();
-            Console.WriteLine();
-
-            int page = 1;
-
-            foreach (var currency in currencies)
+            try
             {
-                Console.WriteLine($">> Scraping for {currency}...");
-                    Thread thread = new Thread(() => { ScrapingForSingleCurrency(currency, page); });
+                //Creating list of currencies
+                CreateCurrencyList();
+                Console.WriteLine();
+
+                int page = 1;
+
+                foreach (var currency in currencies)
+                {
+                    Console.WriteLine($">> Scraping for {currency}...");
+
+                    Thread thread = new Thread(() => { ScrapingForSingleCurrency(currency, page);  });
                     threadPool.Add(thread);
                     thread.Start();
-                
+                }
+                while (ThreadFinished()) ;
+                Console.WriteLine("\n>> Scraping completed.");
             }
-
-            while (ThreadFinished());
-            Console.WriteLine("\n>> Scraping completed.");
+            catch (Exception exc)
+            {
+                Console.WriteLine(exc.Message);
+            }
         }
         private bool ThreadFinished()
         {
             foreach (var thread in threadPool)
             {
                 if (thread.IsAlive)
+                {
                     return true;
+                }
             }
             return false;
         }
@@ -54,9 +62,17 @@ namespace Scraper
         {
             string[] row = new string[7];
             List<string[]> columns = new List<string[]>();
-
+            var htmlString = "";
             //First page checkup
-            var htmlString = PostHttp(currency, page).Result;
+            try
+            {
+                htmlString = PostHttp(currency, page).Result;
+            }
+            catch
+            {
+                Console.WriteLine($">> Connection error. Scraping for {currency} stoped.");
+                return;
+            }
             var html = new HtmlDocument();
             html.LoadHtml(htmlString);
             
@@ -87,7 +103,15 @@ namespace Scraper
             //Iterating through table pages
             while (hasMorePages)
             {
-                htmlString = PostHttp(currency, page).Result;
+                try
+                {
+                    htmlString = PostHttp(currency, page).Result;
+                }
+                catch
+                {
+                    Console.WriteLine($">> Connection error. Scraping for {currency} stoped.");
+                    return;
+                }
                 html = new HtmlDocument();
                 html.LoadHtml(htmlString);
                 valueNodes = html.DocumentNode.SelectNodes("//td[@class='hui12_20']");
